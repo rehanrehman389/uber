@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Uber-style Location Sharing</title>
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+</head>
+<body>
+    <h1>Uber-style Location Sharing</h1>
+
+    <label>Ride ID: <input id="rideId" type="text" placeholder="Enter Ride ID"></label>
+    <button onclick="joinAsDriver()">🚗 Start as Driver</button>
+    <button onclick="joinAsRider()">🧑‍ Rider</button>
+
+    <h3>Driver's Location (Manual Input):</h3>
+    <label>Latitude: <input id="latitude" type="number" step="any" placeholder="Enter Latitude"></label><br>
+    <label>Longitude: <input id="longitude" type="number" step="any" placeholder="Enter Longitude"></label><br>
+    <button onclick="sendLocation()">Update Location</button>
+
+    <h3>Current Driver Location:</h3>
+    <p id="location">Waiting for updates...</p>
+
+    <script>
+        const socket = io("http://localhost:3000");
+
+        let rideId = "";
+
+        function joinAsDriver() {
+            rideId = document.getElementById("rideId").value;
+            if (!rideId) return alert("Enter a Ride ID!");
+            socket.emit("driverJoin", rideId);
+        }
+
+        function joinAsRider() {
+            rideId = document.getElementById("rideId").value;
+            if (!rideId) return alert("Enter a Ride ID!");
+            socket.emit("riderJoin", rideId);
+        }
+
+        function sendLocation() {
+            const latitude = parseFloat(document.getElementById("latitude").value);
+            const longitude = parseFloat(document.getElementById("longitude").value);
+            if (isNaN(latitude) || isNaN(longitude)) {
+                alert("Please enter valid coordinates!");
+                return;
+            }
+            
+            // Sending manual location to the server
+            socket.emit("shareLocation", { rideId, location: { latitude, longitude } });
+
+            // Show the location on the driver side
+            document.getElementById("location").innerText = 
+                `Latitude: ${latitude}, Longitude: ${longitude}`;
+        }
+
+        socket.on("updateLocation", (location) => {
+            document.getElementById("location").innerText = 
+                `Latitude: ${location.latitude}, Longitude: ${location.longitude}`;
+        });
+    </script>
+</body>
+</html>
